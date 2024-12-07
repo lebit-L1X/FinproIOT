@@ -1,11 +1,11 @@
 #include <Arduino.h>
 #include <WiFi.h>
-#include <WiFiClientSecure.h>  // Use this for secure SSL connection
+#include <WiFiClientSecure.h>  
 #include <PubSubClient.h>
 
 // Blynk Config
 #define BLYNK_TEMPLATE_ID "TMPL6hrV-kNLf"
-#define BLYNK_TEMPLATE_NAME "ProyekAkhirIOT"
+#define BLYNK_TEMPLATE_NAME "ProyekAkhirIOTClient"
 #define BLYNK_AUTH_TOKEN "mcZESjQPRAC1Pi2mAwtbH-GLQhVRYVvf"
 #define BLYNK_PRINT Serial
 
