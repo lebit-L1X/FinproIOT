@@ -53,19 +53,6 @@ CAUw7C29C79Fv1C5qfPrmAESrciIxpg0X40KPMbp1ZWVbd4=
 WiFiClientSecure wifiClientSecure;  // Use WiFiClientSecure for SSL
 PubSubClient client(wifiClientSecure);
 
-bool publishToMQTT(const char* message) {
-  if (!client.connected()) {
-    reconnect();  // Ensure that the MQTT client is connected
-  }
-
-  // Publish the message and check if it was successful
-  if (client.publish(topic_publish_ir, message)) {
-    return true;
-  } else {
-    return false;
-  }
-}
-
 void reconnect() {
   while (!client.connected()) {
     Serial.print("Attempting MQTT connection...");

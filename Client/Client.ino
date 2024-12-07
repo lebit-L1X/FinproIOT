@@ -1,7 +1,8 @@
 #include <Arduino.h>
 #include <WiFi.h>
-#include <WiFiClientSecure.h>  
+#include <WiFiClientSecure.h>
 #include <PubSubClient.h>
+#include "painlessMesh.h"
 
 // Blynk Config
 #define BLYNK_TEMPLATE_ID "TMPL6hrV-kNLf"
@@ -14,6 +15,13 @@
 // WiFi
 char ssid[] = "fanculo";   // WiFi Name
 char pass[] = "00000000";  // WiFi Password
+
+//Mesh Config
+#define MESH_SSID "FinproMesh"
+#define MESH_PASSWORD "komainu."
+#define MESH_PORT 5555
+
+painlessMesh mesh;
 
 // MQTT
 const char* mqtt_server = "w7a84bcb.ala.eu-central-1.emqxsl.com";
@@ -47,7 +55,7 @@ PnlUkiaY4IBIqDfv8NZ5YBberOgOzW6sRBc4L0na4UU+Krk2U886UAb3LujEV0ls
 YSEY1QSteDwsOoBrp+uvFRTp2InBuThs4pFsiv9kuXclVzDAGySj4dzp30d8tbQk
 CAUw7C29C79Fv1C5qfPrmAESrciIxpg0X40KPMbp1ZWVbd4=
 -----END CERTIFICATE-----
-)" ;
+)";
 
 // Components
 #define LED 2
@@ -58,6 +66,7 @@ PubSubClient client(wifiClientSecure);
 
 // RTOS Declarations
 TaskHandle_t SwitchCameraTaskHandle;
+TaskHandle_t ReceiveMeshTaskHandle;
 
 int camera_state = 0;  // Default state
 
@@ -66,7 +75,7 @@ BLYNK_WRITE(V0) {
   if (camera_state == 1) {
     digitalWrite(LED, HIGH);
     Serial.println("ON");
-    
+
     if (publishToMQTT("test")) {
       Serial.println("Message successfully sent to MQTT topic.");
     } else {
@@ -133,6 +142,28 @@ void setupWiFi() {
   Serial.println(WiFi.localIP());
 }
 
+void initializeMesh() {
+  mesh.setDebugMsgTypes(ERROR | STARTUP | CONNECTION);
+  mesh.init(MESH_SSID, MESH_PASSWORD, MESH_PORT, WIFI_AP_STA, 6);
+  mesh.onReceive(&receiveCallback);
+  mesh.stationManual(ssid, pass);
+  mesh.setHostname("Mesh Reciever");
+  mesh.onNewConnection(&newConnectionCallback);
+  Serial.println("Mesh Node Started as Receiver");
+}
+
+void receiveCallback(uint32_t from, String& msg) {
+  Serial.printf("Received from %u msg=%s\n", from, msg.c_str());
+  if (msg == "VALID") {
+    //Unlock the door or smthg
+  }
+}
+
+void newConnectionCallback(uint32_t nodeId) {
+  Serial.printf("--> startHere: New Connection, nodeId = %u\n", nodeId);
+}
+
+
 void setup() {
   Serial.begin(115200);
 
@@ -146,24 +177,28 @@ void setup() {
 
   // MQTT Client Setup
   client.setServer(mqtt_server, mqtt_port);
-  client.setCallback(mqttCallback);
+  // client.setCallback(mqttCallback); // for server
 
   // Set the certificate for SSL connection
   wifiClientSecure.setCACert(ca_cert);
+
+  //Initialize Mesh
+  initializeMesh();
 
   // Task Declaration
   xTaskCreate(SwitchCameraTask, "SwitchCameraTask", 1024, NULL, 1, &SwitchCameraTaskHandle);
 }
 
-void mqttCallback(char* topic, byte* payload, unsigned int length) {
-  // Print the message received on the subscribed topic
-  payload[length] = '\0';  // Null terminate the payload
-  String message = String((char*)payload);
-  Serial.print("Message received on topic: ");
-  Serial.print(topic);
-  Serial.print(" - Message: ");
-  Serial.println(message);
-}
+
+// void mqttCallback(char* topic, byte* payload, unsigned int length) {
+//   // Print the message received on the subscribed topic
+//   payload[length] = '\0';  // Null terminate the payload
+//   String message = String((char*)payload);
+//   Serial.print("Message received on topic: ");
+//   Serial.print(topic);
+//   Serial.print(" - Message: ");
+//   Serial.println(message);
+// } // For Server
 
 void loop() {
   Blynk.run();
