@@ -4,6 +4,7 @@
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <PubSubClient.h>
+#include "painlessMesh.h"
 
 //Blynk Config
 #define BLYNK_TEMPLATE_ID "TMPL65XD8BURu"
@@ -14,6 +15,14 @@
 // WiFi
 char ssid[] = "fanculo";   // WiFi Name
 char pass[] = "00000000";  // WiFi Password
+
+//Mesh Config
+#define MESH_SSID "FinproMesh"
+#define MESH_PASSWORD "komainu."
+#define MESH_PORT 5555
+
+painlessMesh mesh;
+
 
 // MQTT
 const char* mqtt_server = "w7a84bcb.ala.eu-central-1.emqxsl.com";
@@ -94,6 +103,20 @@ void setupWiFi() {
   Serial.println(WiFi.localIP());
 }
 
+void initializeMesh() {
+  mesh.setDebugMsgTypes(ERROR | STARTUP | CONNECTION);
+  mesh.init(MESH_SSID, MESH_PASSWORD, MESH_PORT, WIFI_AP_STA, 6);
+  // mesh.onReceive(&receiveCallback); For Receiver (Client)
+  mesh.stationManual(ssid, pass);
+  mesh.setHostname("Mesh Sender");
+  mesh.onNewConnection(&newConnectionCallback);
+  Serial.println("Mesh Node Started as Sender");
+}
+
+void newConnectionCallback(uint32_t nodeId) {
+  Serial.printf("--> startHere: New Connection, nodeId = %u\n", nodeId);
+}
+
 void setup() {
   Serial.begin(115200);
 
@@ -103,11 +126,14 @@ void setup() {
   Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass);
 
   // Pin Declaration
-  pinMode(LED, OUTPUT);
+  //insert pin here
 
   // MQTT Client Setup
   client.setServer(mqtt_server, mqtt_port);
   client.setCallback(mqttCallback);
+
+  //Initialize Mesh
+  initializeMesh();
 
   // Set the certificate for SSL connection
   wifiClientSecure.setCACert(ca_cert);
