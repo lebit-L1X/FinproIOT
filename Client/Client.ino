@@ -2,6 +2,7 @@
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <PubSubClient.h>
+#include <HTTPClient.h>
 #include "painlessMesh.h"
 
 // Blynk Config
@@ -13,8 +14,8 @@
 #include <BlynkSimpleEsp32.h>
 
 // WiFi
-char ssid[] = "fanculo";   // WiFi Name
-char pass[] = "00000000";  // WiFi Password
+char ssid[] = "E COST LT 3";   // WiFi Name
+char pass[] = "Agustus2024";  // WiFi Password
 
 //Mesh Config
 #define MESH_SSID "FinproMesh"
@@ -29,7 +30,7 @@ const int mqtt_port = 8883;
 const char* mqtt_username = "lmelodus";
 const char* mqtt_password = "miaobestfriend";
 const char* topic_publish_ir = "camfootage/frames";
-const char* topic_subscribe_ir = "camfootage/frames";  // Topic to subscribe to
+
 
 // SSL Certificate
 const char* ca_cert = R"(
@@ -68,21 +69,41 @@ PubSubClient client(wifiClientSecure);
 TaskHandle_t SwitchCameraTaskHandle;
 TaskHandle_t ReceiveMeshTaskHandle;
 
+//HTTP Cam
+String serverPath = "http://192.168.100.15:5000/client";
+
+void captureFaceImage() {
+  HTTPClient http;
+  http.begin(serverPath.c_str());  // Start HTTP request to the server
+
+  int httpResponseCode = http.GET();  // Send the GET request
+  if (httpResponseCode > 0) {
+    // Print the response code and the payload from the server
+    Serial.print("HTTP Response code: ");
+    Serial.println(httpResponseCode);
+    String payload = http.getString();  // Get the response payload
+    Serial.println(payload);
+  } else {
+    // Print error code if request failed
+    Serial.print("Error code: ");
+    Serial.println(httpResponseCode);
+  }
+
+  http.end();  // End the HTTP request
+}
+
 int camera_state = 0;  // Default state
 
 BLYNK_WRITE(V0) {
   camera_state = param.asInt();
   if (camera_state == 1) {
-    digitalWrite(LED, HIGH);
-    Serial.println("ON");
+    digitalWrite(LED, HIGH);  // Turn on LED to indicate camera is capturing
+    Serial.println("Capturing Face");
 
-    if (publishToMQTT("test")) {
-      Serial.println("Message successfully sent to MQTT topic.");
-    } else {
-      Serial.println("Failed to send message to MQTT topic.");
-    }
+    // Call the function to capture the image via HTTP GET request
+    captureFaceImage();
   } else {
-    digitalWrite(LED, LOW);
+    digitalWrite(LED, LOW);  // Turn off LED if camera state is 0
     Serial.println("OFF");
   }
 }
@@ -105,8 +126,6 @@ void reconnect() {
     Serial.print("Attempting MQTT connection...");
     if (client.connect("ESP32Client", mqtt_username, mqtt_password)) {
       Serial.println("connected");
-      // Subscribe to the topic after connecting
-      client.subscribe(topic_subscribe_ir);  // Subscribe to the topic
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
@@ -183,7 +202,7 @@ void setup() {
   wifiClientSecure.setCACert(ca_cert);
 
   //Initialize Mesh
-  initializeMesh();
+  // initializeMesh(); //Debug purposes
 
   // Task Declaration
   xTaskCreate(SwitchCameraTask, "SwitchCameraTask", 1024, NULL, 1, &SwitchCameraTaskHandle);
