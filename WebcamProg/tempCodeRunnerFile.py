@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, Response
 import cv2
 import os
 
@@ -7,13 +7,13 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 
 app = Flask(__name__)
 
+# Open the webcam
+camera = cv2.VideoCapture(0)  # 0 for default webcam
+
 
 @app.route("/client", methods=["GET"])
 def capture_image_client():
-    # Initialize the camera
-    camera = cv2.VideoCapture(0)  # 0 for default webcam
     success, frame = camera.read()
-    camera.release()  # Release the camera
     if not success:
         return "Failed to capture image", 500
     else:
@@ -25,10 +25,7 @@ def capture_image_client():
 
 @app.route("/server", methods=["GET"])
 def capture_image_server():
-    # Initialize the camera
-    camera = cv2.VideoCapture(0)  # 0 for default webcam
     success, frame = camera.read()
-    camera.release()  # Release the camera
     if not success:
         return "Failed to capture image", 500
     else:

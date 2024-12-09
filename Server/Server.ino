@@ -4,6 +4,7 @@
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <PubSubClient.h>
+#include <HTTPClient.h>
 #include "painlessMesh.h"
 
 //Blynk Config
@@ -58,9 +59,53 @@ CAUw7C29C79Fv1C5qfPrmAESrciIxpg0X40KPMbp1ZWVbd4=
 -----END CERTIFICATE-----
 )";
 
+#define LED 2
+
 // MQTT Client Setup
 WiFiClientSecure wifiClientSecure;  // Use WiFiClientSecure for SSL
 PubSubClient client(wifiClientSecure);
+
+//RTOS Declarations
+
+
+//HTTP Cam
+String serverPath = "http://192.168.107.64:5000/server";
+
+void captureFaceImage() {
+  HTTPClient http;
+  http.begin(serverPath.c_str());  // Start HTTP request to the server
+
+  int httpResponseCode = http.GET();  // Send the GET request
+  if (httpResponseCode > 0) {
+    // Print the response code and the payload from the server
+    Serial.print("HTTP Response code: ");
+    Serial.println(httpResponseCode);
+    String payload = http.getString();  // Get the response payload
+    Serial.println(payload);
+  } else {
+    // Print error code if request failed
+    Serial.print("Error code: ");
+    Serial.println(httpResponseCode);
+  }
+
+  http.end();  // End the HTTP request
+}
+
+int camera_state = 0;  // Default state
+
+BLYNK_WRITE(V1) {
+  camera_state = param.asInt();
+  if (camera_state == 1) {
+    digitalWrite(LED, HIGH);  // Turn on LED to indicate camera is capturing
+    Serial.println("Capturing Face");
+
+    // Call the function to capture the image via HTTP GET request
+    captureFaceImage();
+  } else {
+    digitalWrite(LED, LOW);  // Turn off LED if camera state is 0
+    Serial.println("OFF");
+  }
+}
 
 void reconnect() {
   while (!client.connected()) {
@@ -133,7 +178,7 @@ void setup() {
   client.setCallback(mqttCallback);
 
   //Initialize Mesh
-  initializeMesh();
+  // initializeMesh();
 
   // Set the certificate for SSL connection
   wifiClientSecure.setCACert(ca_cert);

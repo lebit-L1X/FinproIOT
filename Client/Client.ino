@@ -14,8 +14,8 @@
 #include <BlynkSimpleEsp32.h>
 
 // WiFi
-char ssid[] = "E COST LT 3";   // WiFi Name
-char pass[] = "Agustus2024";  // WiFi Password
+char ssid[] = "fanculo";   // WiFi Name
+char pass[] = "00000000";  // WiFi Password
 
 //Mesh Config
 #define MESH_SSID "FinproMesh"
@@ -70,7 +70,7 @@ TaskHandle_t SwitchCameraTaskHandle;
 TaskHandle_t ReceiveMeshTaskHandle;
 
 //HTTP Cam
-String serverPath = "http://192.168.100.15:5000/client";
+String serverPath = "http://192.168.208.219:5000/server";
 
 void captureFaceImage() {
   HTTPClient http;
@@ -167,6 +167,8 @@ void initializeMesh() {
   mesh.onReceive(&receiveCallback);
   mesh.stationManual(ssid, pass);
   mesh.setHostname("Mesh Reciever");
+  mesh.setRoot(true);
+  mesh.setContainsRoot(true);
   mesh.onNewConnection(&newConnectionCallback);
   Serial.println("Mesh Node Started as Receiver");
 }
