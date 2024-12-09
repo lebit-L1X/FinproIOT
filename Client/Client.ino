@@ -124,60 +124,61 @@ BLYNK_WRITE(V0) {
 
 BLYNK_WRITE(V1) {
   BLYNK_V1 = param.asInt();
+  if (BLYNK_V1 == 1) {
+    if (has_pic == 1) {
+      Serial.println("Comparing Face...");
+      HTTPClient http;
+      http.begin(comparePath.c_str());  // Start HTTP request to the server
 
-  if (has_pic == 1) {
-    Serial.println("Comparing Face...");
-    HTTPClient http;
-    http.begin(comparePath.c_str());  // Start HTTP request to the server
+      int httpResponseCode = http.GET();  // Send the GET request
+      if (httpResponseCode > 0) {
+        Serial.print("HTTP Response code: ");
+        Serial.println(httpResponseCode);
 
-    int httpResponseCode = http.GET();  // Send the GET request
-    if (httpResponseCode > 0) {
-      Serial.print("HTTP Response code: ");
-      Serial.println(httpResponseCode);
+        String payload = http.getString();  // Get the response payload
+        Serial.println(payload);
 
-      String payload = http.getString();  // Get the response payload
-      Serial.println(payload);
+        // Parse JSON response
+        const size_t capacity = JSON_OBJECT_SIZE(3) + 40;  // Adjust capacity as needed
+        DynamicJsonDocument doc(capacity);
+        DeserializationError error = deserializeJson(doc, payload);
 
-      // Parse JSON response
-      const size_t capacity = JSON_OBJECT_SIZE(3) + 40;  // Adjust capacity as needed
-      DynamicJsonDocument doc(capacity);
-      DeserializationError error = deserializeJson(doc, payload);
+        if (!error) {
+          // Dynamically allocate memory for JsonResponse using pvPortMalloc
+          JsonResponse* response = (JsonResponse*)pvPortMalloc(sizeof(JsonResponse));
+          if (response == NULL) {
+            Serial.println("Memory allocation failed!");
+            vPortFree(response);
+            return;
+          }
 
-      if (!error) {
-        // Dynamically allocate memory for JsonResponse using pvPortMalloc
-        JsonResponse* response = (JsonResponse*)pvPortMalloc(sizeof(JsonResponse));
-        if (response == NULL) {
-          Serial.println("Memory allocation failed!");
-          vPortFree(response);
-          return;
-        }
+          // Populate the struct with parsed data
+          response->confidence = doc["confidence"];
+          strcpy(response->message, doc["message"]);
+          response->valid = doc["valid"];
 
-        // Populate the struct with parsed data
-        response->confidence = doc["confidence"];
-        strcpy(response->message, doc["message"]);
-        response->valid = doc["valid"];
+          //Attempt to enqueue the response
+          if (xQueueSend(responseQueue, &response, portMAX_DELAY) == pdPASS) {
+            Serial.println("Response enqueued successfully");
+          } else {
+            Serial.println("Failed to enqueue response, freeing memory");
+            vPortFree(response);
+          }
 
-        //Attempt to enqueue the response
-        if (xQueueSend(responseQueue, &response, portMAX_DELAY) == pdPASS) {
-          Serial.println("Response enqueued successfully");
         } else {
-          Serial.println("Failed to enqueue response, freeing memory");
-          vPortFree(response);
+          Serial.print("JSON Parse Error: ");
+          Serial.println(error.c_str());
         }
-
       } else {
-        Serial.print("JSON Parse Error: ");
-        Serial.println(error.c_str());
+        Serial.print("Error code: ");
+        Serial.println(httpResponseCode);
       }
+      http.end();
     } else {
-      Serial.print("Error code: ");
-      Serial.println(httpResponseCode);
+      Serial.println("No pics have been submitted");
     }
-    http.end();
-  } else {
-    Serial.println("No pics have been submitted");
+    has_pic = 0;
   }
-  has_pic = 0;
 }
 
 void reconnect() {
