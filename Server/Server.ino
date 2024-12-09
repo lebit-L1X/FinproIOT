@@ -124,8 +124,15 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
   Serial.print(topic);
   Serial.print(" - Message: ");
   Serial.println(message);
+  if (message == "Access Granted") {
+    // digitalWrite(LED, HIGH);
+    // Serial.println("LED turned ON");
+    //Unlock Kids
+  }
+  else{
+    //Write to blynk
+  }
 }
-
 
 // Function to set up WiFi connection
 void setupWiFi() {
@@ -166,7 +173,7 @@ void setup() {
   Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass);
 
   // Pin Declaration
-  //insert pin here
+  pinMode(LED, OUTPUT);
 
   // MQTT Client Setup
   client.setServer(mqtt_server, mqtt_port);
