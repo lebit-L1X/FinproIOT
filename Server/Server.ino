@@ -14,8 +14,8 @@
 #include <BlynkSimpleEsp32.h>
 
 // WiFi
-char ssid[] = "fanculo";   // WiFi Name
-char pass[] = "00000000";  // WiFi Password
+char ssid[] = "E COST LT 3";   // WiFi Name
+char pass[] = "Agustus2024";  // WiFi Password
 
 //Mesh Config
 #define MESH_SSID "FinproMesh"

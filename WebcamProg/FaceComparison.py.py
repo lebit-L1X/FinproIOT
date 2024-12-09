@@ -36,7 +36,7 @@ def compare():
     The image paths are provided as URL parameters.
     """
     image_path1 = "C:\\Users\\Wendy\\Documents\\College\\Project\\IOT\\WebcamProg\\a.png"
-    image_path2 = "C:\\Users\\Wendy\\Documents\\College\\Project\\IOT\\WebcamProg\\b.jpg"
+    image_path2 = "C:\\Users\\Wendy\\Documents\\College\\Project\\IOT\\WebcamProg\\b.png"
 
     # Check if both image paths are provided
     if not image_path1 or not image_path2:

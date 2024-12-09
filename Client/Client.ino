@@ -3,6 +3,7 @@
 #include <WiFiClientSecure.h>
 #include <PubSubClient.h>
 #include <HTTPClient.h>
+#include <ArduinoJson.h>
 #include "painlessMesh.h"
 
 // Blynk Config
@@ -14,8 +15,8 @@
 #include <BlynkSimpleEsp32.h>
 
 // WiFi
-char ssid[] = "fanculo";   // WiFi Name
-char pass[] = "00000000";  // WiFi Password
+char ssid[] = "E COST LT 3";  // WiFi Name
+char pass[] = "Agustus2024";  // WiFi Password
 
 //Mesh Config
 #define MESH_SSID "FinproMesh"
@@ -65,16 +66,25 @@ CAUw7C29C79Fv1C5qfPrmAESrciIxpg0X40KPMbp1ZWVbd4=
 WiFiClientSecure wifiClientSecure;  // Use WiFiClientSecure for SSL
 PubSubClient client(wifiClientSecure);
 
+//Struct for Queue
+#define QUEUE_SIZE 10
+typedef struct JsonResponseStruct {
+  float confidence;
+  char message[100];
+  bool valid;
+} JsonResponse;
+
 // RTOS Declarations
-TaskHandle_t SwitchCameraTaskHandle;
-TaskHandle_t ReceiveMeshTaskHandle;
+TaskHandle_t QueuetoMQTT;
+QueueHandle_t responseQueue;
 
 //HTTP Cam
-String serverPath = "http://192.168.208.219:5000/server";
+String capturePath = "http://192.168.100.15:5000/client";
+String comparePath = "http://192.168.100.15:5000/compare";
 
 void captureFaceImage() {
   HTTPClient http;
-  http.begin(serverPath.c_str());  // Start HTTP request to the server
+  http.begin(capturePath.c_str());  // Start HTTP request to the server
 
   int httpResponseCode = http.GET();  // Send the GET request
   if (httpResponseCode > 0) {
@@ -92,14 +102,17 @@ void captureFaceImage() {
   http.end();  // End the HTTP request
 }
 
-int camera_state = 0;  // Default state
+int BLYNK_V0 = 0;  // Default state
+int BLYNK_V1 = 0;  // Default state
+int has_pic = 0;   //Flag to confirm user has photo
+bool isFaceValid = false;
 
 BLYNK_WRITE(V0) {
-  camera_state = param.asInt();
-  if (camera_state == 1) {
+  BLYNK_V0 = param.asInt();
+  if (BLYNK_V0 == 1) {
     digitalWrite(LED, HIGH);  // Turn on LED to indicate camera is capturing
     Serial.println("Capturing Face");
-
+    has_pic = 1;
     // Call the function to capture the image via HTTP GET request
     captureFaceImage();
   } else {
@@ -108,42 +121,105 @@ BLYNK_WRITE(V0) {
   }
 }
 
-bool publishToMQTT(const char* message) {
-  if (!client.connected()) {
-    reconnect();  // Ensure that the MQTT client is connected
-  }
 
-  // Publish the message and check if it was successful
-  if (client.publish(topic_publish_ir, message)) {
-    return true;
+BLYNK_WRITE(V1) {
+  BLYNK_V1 = param.asInt();
+
+  if (has_pic == 1) {
+    Serial.println("Comparing Face...");
+    HTTPClient http;
+    http.begin(comparePath.c_str());  // Start HTTP request to the server
+
+    int httpResponseCode = http.GET();  // Send the GET request
+    if (httpResponseCode > 0) {
+      Serial.print("HTTP Response code: ");
+      Serial.println(httpResponseCode);
+
+      String payload = http.getString();  // Get the response payload
+      Serial.println(payload);
+
+      // Parse JSON response
+      const size_t capacity = JSON_OBJECT_SIZE(3) + 40;  // Adjust capacity as needed
+      DynamicJsonDocument doc(capacity);
+      DeserializationError error = deserializeJson(doc, payload);
+
+      if (!error) {
+        // Dynamically allocate memory for JsonResponse using pvPortMalloc
+        JsonResponse* response = (JsonResponse*)pvPortMalloc(sizeof(JsonResponse));
+        if (response == NULL) {
+          Serial.println("Memory allocation failed!");
+          vPortFree(response);
+          return;
+        }
+
+        // Populate the struct with parsed data
+        response->confidence = doc["confidence"];
+        strcpy(response->message, doc["message"]);
+        response->valid = doc["valid"];
+
+        //Attempt to enqueue the response
+        if (xQueueSend(responseQueue, &response, portMAX_DELAY) == pdPASS) {
+          Serial.println("Response enqueued successfully");
+        } else {
+          Serial.println("Failed to enqueue response, freeing memory");
+          vPortFree(response);
+        }
+
+      } else {
+        Serial.print("JSON Parse Error: ");
+        Serial.println(error.c_str());
+      }
+    } else {
+      Serial.print("Error code: ");
+      Serial.println(httpResponseCode);
+    }
+    http.end();
   } else {
-    return false;
+    Serial.println("No pics have been submitted");
   }
+  has_pic = 0;
 }
 
 void reconnect() {
-  while (!client.connected()) {
-    Serial.print("Attempting MQTT connection...");
-    if (client.connect("ESP32Client", mqtt_username, mqtt_password)) {
-      Serial.println("connected");
-    } else {
-      Serial.print("failed, rc=");
-      Serial.print(client.state());
-      delay(5000);
-    }
+  Serial.print("Attempting MQTT connection...");
+  if (client.connect("ESP32Client", mqtt_username, mqtt_password)) {
+    Serial.println("connected");
+  } else {
+    Serial.print("failed, rc=");
+    Serial.println(client.state());
+    vTaskDelay(500 / portTICK_PERIOD_MS);
   }
 }
 
-// RTOS Task for camera control (not changed)
-void SwitchCameraTask(void* param) {
+void publishToMQTTTask(void* param) {
   while (true) {
-    if (camera_state == 0) {
-      // Kill the camera (stop streaming or any other action)
+    if (!client.connected()) {
+      reconnect();
     } else {
-      // Turn on the camera (start streaming or any other action)
+
+      JsonResponse* response;
+
+      if (xQueueReceive(responseQueue, &response, portMAX_DELAY) == pdPASS) {
+        String message = response->valid ? "Access Granted" : "Intruder Alert";
+
+        if (client.publish(topic_publish_ir, message.c_str())) {
+          Serial.println("Message published successfully.");
+        } else {
+          Serial.println("Failed to publish message.");
+        }
+
+        // Free the dynamically allocated memory for the response
+        vPortFree(response);
+      } else {
+        Serial.println("Failed to receive response from queue.");
+      }
     }
+    vTaskDelay(500 / portTICK_PERIOD_MS);
   }
 }
+
+
+
 
 // Function to set up WiFi connection
 void setupWiFi() {
@@ -203,11 +279,19 @@ void setup() {
   // Set the certificate for SSL connection
   wifiClientSecure.setCACert(ca_cert);
 
+  responseQueue = xQueueCreate(QUEUE_SIZE, sizeof(JsonResponse*));
+  if (responseQueue == NULL) {
+    Serial.println("Failed to create queue");
+  } else {
+    Serial.println("Queue Created");
+  }
+
+  //Create Task
+  xTaskCreate(publishToMQTTTask, "PublishToMQTT", 10000, NULL, 1, NULL);
+
+
   //Initialize Mesh
   // initializeMesh(); //Debug purposes
-
-  // Task Declaration
-  xTaskCreate(SwitchCameraTask, "SwitchCameraTask", 1024, NULL, 1, &SwitchCameraTaskHandle);
 }
 
 

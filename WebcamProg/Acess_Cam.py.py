@@ -94,7 +94,7 @@ def compare():
                 "message": "The faces are likely of different people."
             })
     else:
-        error_message = result.get("error_message", "Unknown error")
+        error_message = result.get("error_message", "No Face Detected")
         return jsonify({
             "error": "Error occurred during comparison.",
             "message": error_message
