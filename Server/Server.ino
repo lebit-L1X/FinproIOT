@@ -1,5 +1,3 @@
-// Will sub to the topic, and if detects something, will compare it to the current stored image.
-
 #include <Arduino.h>
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
@@ -14,7 +12,7 @@
 #include <BlynkSimpleEsp32.h>
 
 // WiFi
-char ssid[] = "E COST LT 3";   // WiFi Name
+char ssid[] = "E COST LT 3";  // WiFi Name
 char pass[] = "Agustus2024";  // WiFi Password
 
 //Mesh Config
@@ -30,7 +28,6 @@ const char* mqtt_server = "w7a84bcb.ala.eu-central-1.emqxsl.com";
 const int mqtt_port = 8883;
 const char* mqtt_username = "lmelodus";
 const char* mqtt_password = "miaobestfriend";
-const char* topic_publish_ir = "camfootage/frames";
 const char* topic_subscribe_ir = "camfootage/frames";  // Topic to subscribe to
 
 // SSL Certificate
@@ -108,29 +105,27 @@ BLYNK_WRITE(V1) {
 }
 
 void reconnect() {
-  while (!client.connected()) {
-    Serial.print("Attempting MQTT connection...");
-    if (client.connect("ESP32Client", mqtt_username, mqtt_password)) {
-      Serial.println("connected");
-      // Subscribe to the topic after connecting
-      client.subscribe(topic_subscribe_ir);  // Subscribe to the topic
-    } else {
-      Serial.print("failed, rc=");
-      Serial.print(client.state());
-      delay(5000);
-    }
+  Serial.print("Attempting MQTT connection...");
+  if (client.connect("ESP32Server", mqtt_username, mqtt_password)) {
+    Serial.println("connected");
+    // Subscribe to the topic after connecting
+    client.subscribe(topic_subscribe_ir);  // Subscribe to the topic
+  } else {
+    Serial.print("failed, rc=");
+    Serial.print(client.state());
+    delay(5000);
   }
 }
 
 void mqttCallback(char* topic, byte* payload, unsigned int length) {
-  // Print the message received on the subscribed topic
-  payload[length] = '\0';  // Null terminate the payload
-  String message = String((char*)payload);
+  String message = String((char*)payload, length);
+  // Print the message received
   Serial.print("Message received on topic: ");
   Serial.print(topic);
   Serial.print(" - Message: ");
   Serial.println(message);
 }
+
 
 // Function to set up WiFi connection
 void setupWiFi() {
@@ -148,15 +143,15 @@ void setupWiFi() {
   Serial.println(WiFi.localIP());
 }
 
-void initializeMesh() {
-  mesh.setDebugMsgTypes(ERROR | STARTUP | CONNECTION);
-  mesh.init(MESH_SSID, MESH_PASSWORD, MESH_PORT, WIFI_AP_STA, 6);
-  // mesh.onReceive(&receiveCallback); For Receiver (Client)
-  mesh.stationManual(ssid, pass);
-  mesh.setHostname("Mesh Sender");
-  mesh.onNewConnection(&newConnectionCallback);
-  Serial.println("Mesh Node Started as Sender");
-}
+// void initializeMesh() {
+//   mesh.setDebugMsgTypes(ERROR | STARTUP | CONNECTION);
+//   mesh.init(MESH_SSID, MESH_PASSWORD, MESH_PORT, WIFI_AP_STA, 6);
+//   // mesh.onReceive(&receiveCallback); For Receiver (Client)
+//   mesh.stationManual(ssid, pass);
+//   mesh.setHostname("Mesh Sender");
+//   mesh.onNewConnection(&newConnectionCallback);
+//   Serial.println("Mesh Node Started as Sender");
+// }
 
 void newConnectionCallback(uint32_t nodeId) {
   Serial.printf("--> startHere: New Connection, nodeId = %u\n", nodeId);
@@ -186,5 +181,8 @@ void setup() {
 
 void loop() {
   Blynk.run();
-  client.loop();  
+  if (!client.connected()) {
+    reconnect();  // Call reconnect function to ensure MQTT connection
+  }
+  client.loop();
 }

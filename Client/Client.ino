@@ -138,6 +138,11 @@ BLYNK_WRITE(V1) {
         String payload = http.getString();  // Get the response payload
         Serial.println(payload);
 
+        
+        if (httpResponseCode == 500){
+          return;
+        }
+
         // Parse JSON response
         const size_t capacity = JSON_OBJECT_SIZE(3) + 40;  // Adjust capacity as needed
         DynamicJsonDocument doc(capacity);
@@ -196,31 +201,27 @@ void publishToMQTTTask(void* param) {
   while (true) {
     if (!client.connected()) {
       reconnect();
-    } else {
+    }
 
-      JsonResponse* response;
+    JsonResponse* response;
 
-      if (xQueueReceive(responseQueue, &response, portMAX_DELAY) == pdPASS) {
-        String message = response->valid ? "Access Granted" : "Intruder Alert";
+    if (xQueueReceive(responseQueue, &response, portMAX_DELAY) == pdPASS) {
+      String message = response->valid ? "Access Granted" : "Intruder Alert";
 
-        if (client.publish(topic_publish_ir, message.c_str())) {
-          Serial.println("Message published successfully.");
-        } else {
-          Serial.println("Failed to publish message.");
-        }
-
-        // Free the dynamically allocated memory for the response
-        vPortFree(response);
+      if (client.publish(topic_publish_ir, message.c_str())) {
+        Serial.println("Message published successfully.");
       } else {
-        Serial.println("Failed to receive response from queue.");
+        Serial.println("Failed to publish message.");
       }
+
+      // Free the dynamically allocated memory for the response
+      vPortFree(response);
+    } else {
+      Serial.println("Failed to receive response from queue.");
     }
     vTaskDelay(500 / portTICK_PERIOD_MS);
   }
 }
-
-
-
 
 // Function to set up WiFi connection
 void setupWiFi() {
@@ -238,24 +239,24 @@ void setupWiFi() {
   Serial.println(WiFi.localIP());
 }
 
-void initializeMesh() {
-  mesh.setDebugMsgTypes(ERROR | STARTUP | CONNECTION);
-  mesh.init(MESH_SSID, MESH_PASSWORD, MESH_PORT, WIFI_AP_STA, 6);
-  mesh.onReceive(&receiveCallback);
-  mesh.stationManual(ssid, pass);
-  mesh.setHostname("Mesh Reciever");
-  mesh.setRoot(true);
-  mesh.setContainsRoot(true);
-  mesh.onNewConnection(&newConnectionCallback);
-  Serial.println("Mesh Node Started as Receiver");
-}
+// void initializeMesh() {
+//   mesh.setDebugMsgTypes(ERROR | STARTUP | CONNECTION);
+//   mesh.init(MESH_SSID, MESH_PASSWORD, MESH_PORT, WIFI_AP_STA, 6);
+//   mesh.onReceive(&receiveCallback);
+//   mesh.stationManual(ssid, pass);
+//   mesh.setHostname("Mesh Reciever");
+//   mesh.setRoot(true);
+//   mesh.setContainsRoot(true);
+//   mesh.onNewConnection(&newConnectionCallback);
+//   Serial.println("Mesh Node Started as Receiver");
+// }
 
-void receiveCallback(uint32_t from, String& msg) {
-  Serial.printf("Received from %u msg=%s\n", from, msg.c_str());
-  if (msg == "VALID") {
-    //Unlock the door or smthg
-  }
-}
+// void receiveCallback(uint32_t from, String& msg) {
+//   Serial.printf("Received from %u msg=%s\n", from, msg.c_str());
+//   if (msg == "VALID") {
+//     //Unlock the door or smthg
+//   }
+// }
 
 void newConnectionCallback(uint32_t nodeId) {
   Serial.printf("--> startHere: New Connection, nodeId = %u\n", nodeId);
