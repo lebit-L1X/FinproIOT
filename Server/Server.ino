@@ -3,24 +3,18 @@
 #include <WiFiClientSecure.h>
 #include <PubSubClient.h>
 #include <HTTPClient.h>
-#include "painlessMesh.h"
+
 
 //Blynk Config
 #define BLYNK_TEMPLATE_ID "TMPL65XD8BURu"
 #define BLYNK_TEMPLATE_NAME "ProyekAkhirIOTServer"
 #define BLYNK_AUTH_TOKEN "OiB3vqfrgZiP0djNwhvuJ-_2Ot0Q9fSY"
 #include <BlynkSimpleEsp32.h>
+WidgetTerminal terminal(V0);
 
 // WiFi
 char ssid[] = "E COST LT 3";  // WiFi Name
 char pass[] = "Agustus2024";  // WiFi Password
-
-//Mesh Config
-#define MESH_SSID "FinproMesh"
-#define MESH_PASSWORD "komainu."
-#define MESH_PORT 5555
-
-painlessMesh mesh;
 
 
 // MQTT
@@ -57,16 +51,15 @@ CAUw7C29C79Fv1C5qfPrmAESrciIxpg0X40KPMbp1ZWVbd4=
 )";
 
 #define LED 2
+#define LOCK 16
 
 // MQTT Client Setup
 WiFiClientSecure wifiClientSecure;  // Use WiFiClientSecure for SSL
 PubSubClient client(wifiClientSecure);
 
-//RTOS Declarations
-
 
 //HTTP Cam
-String serverPath = "http://192.168.107.64:5000/server";
+String serverPath = "http://192.168.100.15:5000/server";
 
 void captureFaceImage() {
   HTTPClient http;
@@ -93,10 +86,8 @@ int camera_state = 0;  // Default state
 BLYNK_WRITE(V1) {
   camera_state = param.asInt();
   if (camera_state == 1) {
-    digitalWrite(LED, HIGH);  // Turn on LED to indicate camera is capturing
+    digitalWrite(LED, HIGH);  
     Serial.println("Capturing Face");
-
-    // Call the function to capture the image via HTTP GET request
     captureFaceImage();
   } else {
     digitalWrite(LED, LOW);  // Turn off LED if camera state is 0
@@ -125,12 +116,13 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
   Serial.print(" - Message: ");
   Serial.println(message);
   if (message == "Access Granted") {
-    // digitalWrite(LED, HIGH);
-    // Serial.println("LED turned ON");
-    //Unlock Kids
-  }
-  else{
-    //Write to blynk
+    digitalWrite(LED, HIGH);
+    digitalWrite(LOCK, HIGH);
+    Serial.println("LED turned ON");
+  } else {
+    Serial.println("Intruder Alert. Sending warning to Blynk...");
+    terminal.println("Intruder Alert!");
+    terminal.flush();  // Ensure the message is sent immediately
   }
 }
 
@@ -150,16 +142,6 @@ void setupWiFi() {
   Serial.println(WiFi.localIP());
 }
 
-// void initializeMesh() {
-//   mesh.setDebugMsgTypes(ERROR | STARTUP | CONNECTION);
-//   mesh.init(MESH_SSID, MESH_PASSWORD, MESH_PORT, WIFI_AP_STA, 6);
-//   // mesh.onReceive(&receiveCallback); For Receiver (Client)
-//   mesh.stationManual(ssid, pass);
-//   mesh.setHostname("Mesh Sender");
-//   mesh.onNewConnection(&newConnectionCallback);
-//   Serial.println("Mesh Node Started as Sender");
-// }
-
 void newConnectionCallback(uint32_t nodeId) {
   Serial.printf("--> startHere: New Connection, nodeId = %u\n", nodeId);
 }
@@ -174,13 +156,11 @@ void setup() {
 
   // Pin Declaration
   pinMode(LED, OUTPUT);
+  pinMode(LOCK, OUTPUT);
 
   // MQTT Client Setup
   client.setServer(mqtt_server, mqtt_port);
   client.setCallback(mqttCallback);
-
-  //Initialize Mesh
-  // initializeMesh();
 
   // Set the certificate for SSL connection
   wifiClientSecure.setCACert(ca_cert);
