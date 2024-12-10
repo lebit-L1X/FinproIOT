@@ -54,8 +54,8 @@ Selanjutnya, sistem ini dapat dikembangkan lagi dengan ditambahkan fitur berikut
 
 ## References
 
-https://esp32io.com/tutorials/esp32-solenoid-lock
+[1] ESP32IO.com, “ESP32 controls servo motor via WebSocket,” ESP32 Tutorial, 2024. https://esp32io.com/tutorials/esp32-solenoid-lock (accessed Dec. 10, 2024).
+‌
+[2] “ESP32-CAM Video Streaming and Face Recognition with Arduino IDE | Random Nerd Tutorials,” Random Nerd Tutorials, Dec. 10, 2019. https://randomnerdtutorials.com/esp32-cam-video-streaming-face-recognition-arduino-ide/ (accessed Dec. 10, 2024).
 
-https://randomnerdtutorials.com/esp32-cam-video-streaming-face-recognition-arduino-ide/
-
-https://github.com/fustyles/Arduino/tree/master/ESP32-CAM_Base64
+[3] “Arduino/ESP32-CAM_Base64 at master · fustyles/Arduino,” GitHub, 2024. https://github.com/fustyles/Arduino/tree/master/ESP32-CAM_Base64 (accessed Dec. 10, 2024).
