@@ -4,7 +4,6 @@
 #include <PubSubClient.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
-#include "painlessMesh.h"
 
 // Blynk Config
 #define BLYNK_TEMPLATE_ID "TMPL6hrV-kNLf"
@@ -18,12 +17,6 @@
 char ssid[] = "E COST LT 3";  // WiFi Name
 char pass[] = "Agustus2024";  // WiFi Password
 
-//Mesh Config
-#define MESH_SSID "FinproMesh"
-#define MESH_PASSWORD "komainu."
-#define MESH_PORT 5555
-
-painlessMesh mesh;
 
 // MQTT
 const char* mqtt_server = "w7a84bcb.ala.eu-central-1.emqxsl.com";
@@ -239,24 +232,6 @@ void setupWiFi() {
   Serial.println(WiFi.localIP());
 }
 
-// void initializeMesh() {
-//   mesh.setDebugMsgTypes(ERROR | STARTUP | CONNECTION);
-//   mesh.init(MESH_SSID, MESH_PASSWORD, MESH_PORT, WIFI_AP_STA, 6);
-//   mesh.onReceive(&receiveCallback);
-//   mesh.stationManual(ssid, pass);
-//   mesh.setHostname("Mesh Reciever");
-//   mesh.setRoot(true);
-//   mesh.setContainsRoot(true);
-//   mesh.onNewConnection(&newConnectionCallback);
-//   Serial.println("Mesh Node Started as Receiver");
-// }
-
-// void receiveCallback(uint32_t from, String& msg) {
-//   Serial.printf("Received from %u msg=%s\n", from, msg.c_str());
-//   if (msg == "VALID") {
-//     //Unlock the door or smthg
-//   }
-// }
 
 void newConnectionCallback(uint32_t nodeId) {
   Serial.printf("--> startHere: New Connection, nodeId = %u\n", nodeId);
@@ -291,21 +266,8 @@ void setup() {
   //Create Task
   xTaskCreate(publishToMQTTTask, "PublishToMQTT", 10000, NULL, 1, NULL);
 
-
-  //Initialize Mesh
-  // initializeMesh(); //Debug purposes
 }
 
-
-// void mqttCallback(char* topic, byte* payload, unsigned int length) {
-//   // Print the message received on the subscribed topic
-//   payload[length] = '\0';  // Null terminate the payload
-//   String message = String((char*)payload);
-//   Serial.print("Message received on topic: ");
-//   Serial.print(topic);
-//   Serial.print(" - Message: ");
-//   Serial.println(message);
-// } // For Server
 
 void loop() {
   Blynk.run();
