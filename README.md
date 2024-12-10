@@ -24,17 +24,69 @@ Breadboard digunakan untuk membuat prototipe rangkaian elektronik secara modular
 Implementasi proyek :
 ![Gambar 2.1 implementasi desain hardware](https://raw.githubusercontent.com/lebit-L1X/FinproIOT/refs/heads/master/Pictures/Hardware%20design.JPG)
 
+[Model 3D desain hardware](https://www.tinkercad.com/things/9tIslLEpA0q-finpro-iot)
+
 ## 3. Software implementation details
 
 Pada sisi server, framework Flask digunakan untuk menangani API yang menerima permintaan HTTP GET dari ESP32. Ketika permintaan diterima, server mengaktifkan webcam laptop untuk menangkap gambar dan menyimpannya sebagai b.png di direktori lokal. Server ini juga memproses permintaan validasi gambar melalui API Face++ untuk membandingkan gambar yang diambil (a.png di sisi client) dengan b.png. Respons dalam format JSON dari API akan diteruskan ke client untuk dianalisis lebih lanjut.
 Pada sisi client, ESP32 dikonfigurasi untuk berkomunikasi melalui WiFi menggunakan pustaka seperti WiFi.h dan HTTPClient.h. Dengan aplikasi Blynk, dua tombol kontrol disediakan: "Take a Photo" untuk memulai proses pengambilan gambar, dan "Validate Photo" untuk memvalidasi wajah menggunakan API. Proses validasi menghasilkan output berupa tingkat kepercayaan dan status akses (diberikan atau ditolak). Output ini dipublikasikan ke server MQTT dan ditampilkan pada aplikasi Blynk.
 
+Implementasi perangkat lunak yang dibuat :
+![Gambar 3.1 Server gambar yang dibuat untuk mengidentifikasi pengguna yang diperbolehkan untuk mengakses pintu tersebut](https://)
+
 ## 4. Test results and implementation details
 
-Proyek ini telah diuji menggunakan beberapa skenario pengujian untuk memastikan bahwa sistem berfungsi dengan baik dan memberikan respons yang sesuai. Pengujian dilakukan dengan mengambil gambar wajah pengguna, memvalidasi gambar tersebut dengan API Face++, dan mengontrol akses pintu menggunakan relay. Berikut adalah hasil pengujian yang diperoleh:
+Proyek ini telah diuji menggunakan beberapa skenario pengujian, seperti :
+
+- API Testing untuk memastikan bahwa sistem berfungsi dengan baik dan memberikan respons yang sesuai. Pengujian dilakukan dengan mengambil dua gambar wajah pengguna dan memvalidasi gambar tersebut dengan API Face++. Selain itu, pengujian juga dilakukan dengan membandingkan gambar yang tidak ada wajah dengan gambar yang memiliki wajah untuk memastikan bahwa sistem dapat membedakan wajah dengan benar.
+  ![Gambar 4.1 Gambar yang terdapat pada server gambar](https://)
+  ![Gambar 4.2 Gambar yang diujikan](https://)
+
+- Web Server berbasis Flask. Pengujian dilakukan dengan membandingkan 2 gambar pada server dengan 3 gambar klien yang berbeda. Pengujian ini dilakukan untuk memastikan bahwa server dapat menerima permintaan dari klien dan memberikan respons yang sesuai.
+- ESP32 Klien dapat melakukan proses upload dan memanggil verifikasi wajah. Ini dilakukan melalui Blynk dan upload serta verifikasi dilakukan dengan mengakses web server. Oleh karena itu, dilakukan beberapa pengujian pada ESP32 client, antara lain memastikan client terhubung ke Blynk, memastikan pemanggilan permintaan HTTP pada webcam berhasil, serta pengiriman data atau publikasi ke MQTT berhasil.
+- ESP32 Server dapat melakukan proses upload dan menerima data hasil verifikasi, serta mengirimkan warning ke blynk. Proses yang dilalui untuk upload wajah serupa dengan client sehingga pada ESP32 server testing, pengujian dilakukan terhadap keberhasilan blynk, akses HTTP, subscribe topic MQTT dan mengirimkan warning kepada blynk.
+- Blynk app merupakan interface yang digunakan oleh client dan server dalam mengakses webcam. Pengujian pada blynk dilakukan dengan memastikan widget berjalan dengan seharusnya dan pengiriman perintah untuk mengakses webcam maupun penerimaan data akses invalid melalui terminal diterima secara sempurna.
+- Hardware testing dilakukan dengan menguji ESP32 serta hardware yang terhubung, yaitu built in LED serta relay yang mengaktifkan solenoid lock.
 
 Hasil pengujian sistem :
-![Gambar 4.1 Hasil pengujian](https://)
+
+- Tes API
+
+![Gambar 4.3 Hasil pengujian](https://)
+
+- Tes ESP32 Klien
+  Koneksi Blynk dengan perangkat berhasil :
+  ![Gambar 4.4 Hasil pengujian aplikasi Blynk](https://raw.githubusercontent.com/lebit-L1X/FinproIOT/refs/heads/master/Pictures/Blynk_Client.png)
+  Mengakses kamera melalui Blynk dari klien :
+  ![Gambar 4.5 Hasil pengujian](https://raw.githubusercontent.com/lebit-L1X/FinproIOT/refs/heads/master/Pictures/Capture_LogClient.png)
+  Foto yang tersimpan setelah berhasil mengakses kamera yang disimpan pada penyimpanan lokal :
+  ![Gambar 4.6 Hasil pengujian](https://raw.githubusercontent.com/lebit-L1X/FinproIOT/refs/heads/master/Pictures/a-client.png)
+  Melakukan perbandingan menggunakan foto tersebut dengan foto yang ada pada server, yang merupakan foto dari pengguna yang diperbolehkan :
+  ![Gambar 4.7 Hasil pengujian](https://raw.githubusercontent.com/lebit-L1X/FinproIOT/refs/heads/master/Pictures/Compare_Client_Valid.png)
+  Melakukan perbandingan dengan menggunakan gambar yang lain yang tidak terdapat pada server gambar sehingga tidak diperbolehkan :
+  ![Gambar 4.8 Hasil pengujian](https://raw.githubusercontent.com/lebit-L1X/FinproIOT/refs/heads/master/Pictures/Compare_Client_Invalid.png)
+  Berhasil terhubung ke MQTT dan mengirimkan data hasil validasi :
+  ![Gambar 4.9 Hasil pengujian](https://raw.githubusercontent.com/lebit-L1X/FinproIOT/refs/heads/master/Pictures/MQTT_Client.png)
+
+- Tes ESP32 Server
+  Koneksi Blynk dengan perangkat berhasil :
+  ![Gambar 4.10 Hasil pengujian aplikasi Blynk](https://raw.githubusercontent.com/lebit-L1X/FinproIOT/refs/heads/master/Pictures/Blynk_Server.png)
+  Berhasil mengakses kamera melalui Blynk dari server :
+  ![Gambar 4.11 Hasil pengujian](https://raw.githubusercontent.com/lebit-L1X/FinproIOT/refs/heads/master/Pictures/Capture_LogServer.png)
+  Foto yang tersimpan setelah berhasil mengakses kamera yang disimpan pada penyimpanan lokal :
+  ![Gambar 4.12 Hasil pengujian](https://raw.githubusercontent.com/lebit-L1X/FinproIOT/refs/heads/master/Pictures/b-server.png)
+  Berhasil terhubung ke MQTT dan menerima data hasil validasi setelah berlangganan ke topik MQTT tersebut ketika pengguna yang diperbolehkan masuk :
+  ![Gambar 4.13 Hasil pengujian](https://raw.githubusercontent.com/lebit-L1X/FinproIOT/refs/heads/master/Pictures/MQTT_Server.png)
+  dan ketika pengguna yang tidak diperbolehkan masuk :
+  ![Gambar 4.14 Hasil pengujian](https://raw.githubusercontent.com/lebit-L1X/FinproIOT/refs/heads/master/Pictures/MQTT_Server_Invalid.png)
+
+- Blynk app testing
+  Berhasil menghubungkan aplikasi Blynk dengan ESP32 klien dan server. Ketika terdapat pengguna yang tidak dikenali, maka aplikasi Blynk akan memberikan notifikasi berikut :
+  ![Gambar 4.15 Hasil pengujian](https://raw.githubusercontent.com/lebit-L1X/FinproIOT/refs/heads/master/Pictures/Blynk_Server_Intruder.png)
+
+- Hardware testing
+  Berhasil mengaktifkan solenoid lock menggunakan relay 5V :
+  ![Gambar 4.16 Hasil pengujian](https://)
 
 ## 5. Conclusion and future work
 
@@ -50,7 +102,7 @@ Selanjutnya, sistem ini dapat dikembangkan lagi dengan ditambahkan fitur berikut
 - Mengintegrasikan sistem dengan perangkat pintar lainnya seperti sensor gerak untuk meningkatkan keamanan dan kenyamanan pengguna seperti memulai autentikasi wajah otomatis jika terdeteksi adanya gerakan.
 - Mengembangkan infrastruktur IoT sehingga dapat mendukung lebih dari satu kamera
 - Mengembangkan aplikasi Blynk dengan fitur tambahan seperti log akses untuk memberikan informasi yang lebih lengkap kepada pengguna.
-- Mengimplementasikan enkrpsi data untuk melindungi informasi pengguna dan mencegah akses yang tidak sah.
+- Mengimplementasikan enkripsi data untuk melindungi informasi pengguna dan mencegah akses yang tidak sah.
 
 ## References
 
