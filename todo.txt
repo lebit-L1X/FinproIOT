@@ -1,9 +1,0 @@
-server
-if access granted, unlock
-if intruder write to blynk - add blynk stuff virtual pin string
-
-
-client
-add timer to reset picture taken (1 minute), xtimer
-debugging in case of 500 http response
-blynk message to tell that access is successful or no
