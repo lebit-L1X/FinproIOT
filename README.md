@@ -48,9 +48,9 @@ Selanjutnya, sistem ini dapat dikembangkan lagi dengan ditambahkan fitur berikut
 
 - Menambahkan fitur keamanan tambahan seperti PIN atau akses berbasis token untuk meningkatkan keamanan sistem.
 - Mengintegrasikan sistem dengan perangkat pintar lainnya seperti sensor gerak untuk meningkatkan keamanan dan kenyamanan pengguna seperti memulai autentikasi wajah otomatis jika terdeteksi adanya gerakan.
-- Mengoptimalkan algoritma pengenalan wajah untuk meningkatkan akurasi dan respons sistem.
+- Mengembangkan infrastruktur IoT sehingga dapat mendukung lebih dari satu kamera
 - Mengembangkan aplikasi Blynk dengan fitur tambahan seperti log akses untuk memberikan informasi yang lebih lengkap kepada pengguna.
-- Mengimplementasikan enkripsi data untuk melindungi informasi pengguna dan mencegah akses yang tidak sah.
+- Mengimplementasikan enkrpsi data untuk melindungi informasi pengguna dan mencegah akses yang tidak sah.
 
 ## References
 
