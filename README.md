@@ -18,32 +18,16 @@ Proyek ini tidak hanya relevan untuk aplikasi rumah tangga tetapi juga dapat dii
 
 ## 2. Hardware design and implementation details
 
-Sistem Smart Door Lock with Face Recognition ini menggunakan beberapa komponen perangkat keras untuk mengimplementasikan fungsionalitasnya. Perangkat keras yang digunakan dalam proyek ini adalah sebagai berikut:
+Desain hardware pada proyek Smart Door Lock with Face Recognition menggunakan beberapa komponen utama, yaitu dua modul ESP32, breadboard, solenoid lock 12V, dan relay 5V. ESP32 pertama berfungsi sebagai modul utama untuk pengambilan gambar wajah melalui kamera yang terintegrasi, sementara ESP32 kedua bertindak sebagai server yang mengelola komunikasi data dan pengendalian aktuator. Komunikasi antara kedua modul ini dilakukan melalui jaringan mesh, yang memberikan konektivitas stabil dan latensi rendah.
+Breadboard digunakan untuk membuat prototipe rangkaian elektronik secara modular, memungkinkan penyambungan komponen secara fleksibel. Solenoid lock 12V berfungsi sebagai mekanisme penguncian yang dikendalikan oleh relay 5V. Relay bertindak sebagai saklar elektronik yang menghubungkan atau memutus aliran daya ke solenoid berdasarkan sinyal kontrol dari ESP32. Desain ini memastikan solenoid hanya aktif saat wajah yang terdeteksi berhasil dikenali oleh sistem.
 
-- Webcam / Kamera : Sistem ini menggunakan webcam dari laptop sebagai perangkat untuk mengambil gambar wajah pengguna. Webcam ini terhubung ke laptop melalui kabel USB dan digunakan untuk mengambil gambar wajah pengguna saat proses pengenalan wajah.
-
-- ESP32: ESP32 adalah mikrokontroler yang digunakan dalam sistem ini. Mikrokontroler ini bertanggung jawab untuk mengendalikan operasi sistem secara keseluruhan. ESP32 terhubung ke webcam melalui koneksi USB dan juga terhubung ke jaringan WiFi untuk mengirimkan data dan menerima instruksi dari server.
-
-- Relay : Relay digunakan untuk mengendalikan kunci pintu secara otomatis. Ketika sistem mendeteksi wajah yang terdaftar dan memberikan akses yang valid, relay akan diaktifkan untuk membuka kunci pintu. Relay ini terhubung ke ESP32 dan dapat dikendalikan melalui sinyal output dari mikrokontroler.
-
-Implementasi proyek ini :
+Implementasi proyek :
 ![Gambar 2.1 implementasi hardware](https://)
 
 ## 3. Software implementation details
 
-Selain perangkat keras, sistem Smart Door Lock with Face Recognition ini juga membutuhkan implementasi solusi perangkat lunak yang tepat untuk mengoperasikan sistem secara efisien. Komponen perangkat lunak yang digunakan pada proyek ini adalah sebagai berikut:
-
-- Flask Server: Sistem menggunakan Flask Server untuk meng-host server yang akan menerima permintaan dari ESP32 dan mengambil foto dari webcam. Flask Server ini berjalan di laptop dan berfungsi sebagai jembatan antara ESP32 dan webcam.
-
-- HTTP Request: Sistem menggunakan HTTP Request untuk berkomunikasi antara ESP32 dan Flask Server. Ketika pengguna menekan tombol "take a photo" atau "validate photo" pada aplikasi Blynk, ESP32 akan mengirimkan permintaan HTTP ke Flask Server untuk mengambil foto atau menjalankan API Face++ untuk memvalidasi foto.
-
-- API Face++: Sistem menggunakan API Face++ untuk melakukan pemrosesan pengenalan wajah. Ketika pengguna memvalidasi foto, ESP32 akan mengirimkan foto yang diambil ke API Face++ untuk membandingkannya dengan foto wajah yang terdaftar. API Face++ akan memberikan respons dalam bentuk JSON yang akan di-deserialize dan dimasukkan ke dalam antrian.
-
-- MQTT: Sistem menggunakan protokol MQTT (Message Queuing Telemetry Transport) untuk mengirimkan data dari ESP32 ke aplikasi Blynk. Data hasil validasi wajah akan dipublikasikan melalui MQTT dan ditampilkan pada aplikasi Blynk untuk memberikan informasi apakah akses diberikan atau tidak.
-
-- Task: Sistem menggunakan task untuk membaca antrian data hasil validasi wajah dan mempublikasikannya melalui MQTT. Task ini berjalan di ESP32 dan memastikan bahwa data hasil validasi wajah dikirimkan ke aplikasi Blynk secara real-time.
-
-- Blynk: Blynk adalah platform IoT yang digunakan dalam sistem ini. Platform ini digunakan untuk membuat antarmuka pengguna yang memungkinkan pengguna untuk mengontrol sistem melalui aplikasi ponsel mereka. Pengguna dapat menggunakan aplikasi Blynk untuk mengambil foto, memvalidasi foto, dan melihat status akses pintu.
+Pada sisi server, framework Flask digunakan untuk menangani API yang menerima permintaan HTTP GET dari ESP32. Ketika permintaan diterima, server mengaktifkan webcam laptop untuk menangkap gambar dan menyimpannya sebagai b.png di direktori lokal. Server ini juga memproses permintaan validasi gambar melalui API Face++ untuk membandingkan gambar yang diambil (a.png di sisi client) dengan b.png. Respons dalam format JSON dari API akan diteruskan ke client untuk dianalisis lebih lanjut.
+Pada sisi client, ESP32 dikonfigurasi untuk berkomunikasi melalui WiFi menggunakan pustaka seperti WiFi.h dan HTTPClient.h. Dengan aplikasi Blynk, dua tombol kontrol disediakan: "Take a Photo" untuk memulai proses pengambilan gambar, dan "Validate Photo" untuk memvalidasi wajah menggunakan API. Proses validasi menghasilkan output berupa tingkat kepercayaan dan status akses (diberikan atau ditolak). Output ini dipublikasikan ke server MQTT dan ditampilkan pada aplikasi Blynk.
 
 ## 4. Test results and implementation details
 
