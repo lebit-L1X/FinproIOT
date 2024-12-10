@@ -22,7 +22,7 @@ Desain hardware pada proyek Smart Door Lock with Face Recognition menggunakan be
 Breadboard digunakan untuk membuat prototipe rangkaian elektronik secara modular, memungkinkan penyambungan komponen secara fleksibel. Solenoid lock 12V berfungsi sebagai mekanisme penguncian yang dikendalikan oleh relay 5V. Relay bertindak sebagai saklar elektronik yang menghubungkan atau memutus aliran daya ke solenoid berdasarkan sinyal kontrol dari ESP32. Desain ini memastikan solenoid hanya aktif saat wajah yang terdeteksi berhasil dikenali oleh sistem.
 
 Implementasi proyek :
-![Gambar 2.1 implementasi hardware](https://)
+![Gambar 2.1 implementasi desain hardware](https://raw.githubusercontent.com/lebit-L1X/FinproIOT/refs/heads/master/Pictures/Hardware%20design.JPG)
 
 ## 3. Software implementation details
 
