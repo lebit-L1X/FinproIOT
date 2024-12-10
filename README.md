@@ -92,9 +92,11 @@ Hasil pengujian sistem :
 
 Kesimpulannya :
 
--
--
--
+Kelompok 15 telah berhasil mengembangkan sistem Smart Lock berbasis Facial Recognition sebagai solusi untuk meningkatkan keamanan rumah. Sistem ini menggunakan mikrokontroler ESP32 dan platform Blynk untuk mengirimkan permintaan HTTP ke webcam yang terhubung melalui web server. Webcam memproses gambar wajah dan memberikan respons validitas hasil pengenalan wajah. Hasilnya diteruskan ke MQTT server untuk menentukan tindakan selanjutnya, seperti membuka pintu atau memberikan peringatan melalui aplikasi Blynk jika wajah tidak valid.
+
+Sistem ini memanfaatkan teknologi IoT dan pengenalan wajah yang andal untuk meningkatkan keamanan dan efisiensi. ESP32 mendukung komunikasi data real-time, MQTT server memungkinkan pengelolaan data yang cepat, dan Blynk memberikan interface yang mudah diakses. Sistem ini juga dapat memberikan notifikasi jika ada upaya akses mencurigakan, meningkatkan pengawasan dan respon terhadap ancaman.
+
+Sistem Smart Lock ini inovatif dan relevan untuk kebutuhan keamanan rumah modern. Potensinya dapat ditingkatkan dengan mendukung beberapa perangkat kamera, meningkatkan interface, dan mengembangkan komponen software dan hardware yang digunakan.
 
 Selanjutnya, sistem ini dapat dikembangkan lagi dengan ditambahkan fitur berikut :
 
