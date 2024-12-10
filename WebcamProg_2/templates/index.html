@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Server Image Manager</title>
+</head>
+<body>
+    <h1>Server Images</h1>
+    <ul>
+        {% for image in images %}
+        <li>
+            <img src="/images/{{ image }}" alt="{{ image }}" style="width:100px; height:auto;">
+            {{ image }}
+            <form action="/delete_server_image/{{ image }}" method="POST" style="display:inline;">
+                <button type="submit">Delete</button>
+            </form>
+            <form action="/rename_server_image/{{ image }}" method="POST" style="display:inline;">
+                <input type="text" name="new_name" placeholder="New name" required>
+                <button type="submit">Rename</button>
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+
+    <form action="/add_server_image" method="POST">
+        <button type="submit">Add Server Image</button>
+    </form>
+</body>
+</html>
